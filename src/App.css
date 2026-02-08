@@ -1,0 +1,205 @@
+/* App-specific styles */
+
+/* Layout */
+.layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 260px;
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 50;
+  transition: transform 0.3s ease;
+}
+
+.sidebar-collapsed {
+  transform: translateX(-100%);
+}
+
+/* Main content */
+.main-content {
+  flex: 1;
+  margin-left: 260px;
+  transition: margin-left 0.3s ease;
+}
+
+.main-content-full {
+  margin-left: 0;
+}
+
+/* Cards */
+.card-hover {
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.card-hover:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+/* Tables */
+.table-row-hover:hover {
+  background-color: hsl(var(--muted) / 0.5);
+}
+
+/* Forms */
+.form-input:focus {
+  ring: 2px;
+  ring-color: hsl(var(--ring));
+}
+
+/* Buttons */
+.btn-primary {
+  @apply bg-primary text-primary-foreground hover:bg-primary/90;
+}
+
+.btn-secondary {
+  @apply bg-secondary text-secondary-foreground hover:bg-secondary/90;
+}
+
+.btn-ghost {
+  @apply hover:bg-muted;
+}
+
+/* Badges */
+.badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+/* Avatars */
+.avatar {
+  @apply inline-flex items-center justify-center rounded-full bg-muted;
+}
+
+.avatar-sm {
+  @apply w-8 h-8 text-sm;
+}
+
+.avatar-md {
+  @apply w-10 h-10 text-base;
+}
+
+.avatar-lg {
+  @apply w-12 h-12 text-lg;
+}
+
+/* Loading states */
+.skeleton {
+  @apply animate-pulse bg-muted rounded;
+}
+
+/* Empty states */
+.empty-state {
+  @apply flex flex-col items-center justify-center py-12 text-center;
+}
+
+.empty-state-icon {
+  @apply w-16 h-16 text-muted-foreground mb-4;
+}
+
+.empty-state-title {
+  @apply text-lg font-medium text-foreground mb-2;
+}
+
+.empty-state-description {
+  @apply text-sm text-muted-foreground max-w-sm;
+}
+
+/* Page header */
+.page-header {
+  @apply flex items-center justify-between py-4 px-6 border-b;
+}
+
+.page-title {
+  @apply text-2xl font-semibold tracking-tight;
+}
+
+/* Stats cards */
+.stat-card {
+  @apply p-6 rounded-lg border bg-card;
+}
+
+.stat-label {
+  @apply text-sm font-medium text-muted-foreground;
+}
+
+.stat-value {
+  @apply text-3xl font-bold tracking-tight mt-2;
+}
+
+.stat-change {
+  @apply text-sm mt-2;
+}
+
+.stat-change-positive {
+  @apply text-green-600;
+}
+
+.stat-change-negative {
+  @apply text-red-600;
+}
+
+/* Funnel stages */
+.funnel-stage {
+  @apply relative flex items-center py-3 px-4 rounded-lg border transition-all;
+}
+
+.funnel-stage-active {
+  @apply border-primary bg-primary/5;
+}
+
+.funnel-stage-completed {
+  @apply border-green-500 bg-green-50;
+}
+
+/* Timeline */
+.timeline {
+  @apply relative pl-8;
+}
+
+.timeline::before {
+  content: '';
+  @apply absolute left-3 top-0 bottom-0 w-px bg-border;
+}
+
+.timeline-item {
+  @apply relative pb-8;
+}
+
+.timeline-item::before {
+  content: '';
+  @apply absolute left-[-21px] top-1 w-2 h-2 rounded-full bg-primary;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+  
+  .sidebar-open {
+    transform: translateX(0);
+  }
+  
+  .main-content {
+    margin-left: 0;
+  }
+}
+
+/* Print styles */
+@media print {
+  .sidebar,
+  .no-print {
+    display: none !important;
+  }
+  
+  .main-content {
+    margin-left: 0 !important;
+  }
+}
