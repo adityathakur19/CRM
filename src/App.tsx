@@ -1,3 +1,6 @@
+// File: Frontend/src/App.tsx
+// UPDATED: Added LeadForm and TaskForm imports and routes
+
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
@@ -12,10 +15,12 @@ import Register from '@pages/auth/Register';
 import Dashboard from '@pages/dashboard/Dashboard';
 import Leads from '@pages/leads/Leads';
 import LeadDetail from '@pages/leads/LeadDetail';
+import LeadForm from '@pages/leads/LeadForm'; 
 import Users from '@pages/users/Users';
 import UserDetail from '@pages/users/UserDetail';
 import Tasks from '@pages/tasks/Tasks';
 import TaskDetail from '@pages/tasks/TaskDetail';
+import TaskForm from '@pages/tasks/TaskForm'; 
 import Activities from '@pages/activities/Activities';
 import Settings from '@pages/settings/Settings';
 import NotFound from '@pages/NotFound';
@@ -55,12 +60,14 @@ function App() {
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<Dashboard />} />
 
-              {/* Leads */}
+              {/* Leads - NEW ROUTE ADDED */}
               <Route path="/leads" element={<Leads />} />
+              <Route path="/leads/new" element={<LeadForm />} />
               <Route path="/leads/:id" element={<LeadDetail />} />
 
-              {/* Tasks */}
+              {/* Tasks - NEW ROUTE ADDED */}
               <Route path="/tasks" element={<Tasks />} />
+              <Route path="/tasks/new" element={<TaskForm />} />
               <Route path="/tasks/:id" element={<TaskDetail />} />
 
               {/* Activities */}

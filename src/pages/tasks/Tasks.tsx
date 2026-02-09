@@ -1,3 +1,5 @@
+// File: Frontend/src/pages/tasks/Tasks.tsx
+
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
@@ -75,7 +77,8 @@ if (priorityFilter !== 'all') params.priority = priorityFilter;
             Manage your tasks and follow-ups
           </p>
         </div>
-        <Button>
+        {/* FIXED: Added onClick handler */}
+        <Button onClick={() => navigate('/tasks/new')}>
           <Plus className="w-4 h-4 mr-2" />
           New Task
         </Button>

@@ -16,6 +16,7 @@ import {
   Edit,
   Trash2,
   Send,
+  Plus,
 } from 'lucide-react';
 import { leadsApi } from '@services/api';
 import { useAuthStore } from '@store/authStore';
@@ -41,6 +42,10 @@ const statusColors: Record<string, string> = {
   hot: 'bg-red-100 text-red-800 border-red-200',
   warm: 'bg-amber-100 text-amber-800 border-amber-200',
   cold: 'bg-blue-100 text-blue-800 border-blue-200',
+  qualified: 'bg-green-100 text-green-800 border-green-200',
+  new: 'bg-blue-100 text-blue-800 border-blue-200',
+  contacted: 'bg-purple-100 text-purple-800 border-purple-200',
+  unqualified: 'bg-gray-100 text-gray-800 border-gray-200',
 };
 
 const stageLabels: Record<string, string> = {
@@ -109,17 +114,22 @@ export default function LeadDetail() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">
-              {lead.sender?.displayName || lead.sender?.username || 'Unknown Lead'}
+              {lead.sender?.name || lead.sender?.username || 'Unknown Lead'}
             </h1>
             <p className="text-muted-foreground text-sm">
-              Lead ID: {lead.leadId}
+              Lead ID: {lead.externalLeadId || lead._id}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className={statusColors[lead.status]}>
+          <Badge variant="outline" className={statusColors[lead.status] || statusColors.new}>
             {lead.status}
           </Badge>
+          {lead.leadClassification && (
+            <Badge variant="outline" className={statusColors[lead.leadClassification]}>
+              {lead.leadClassification}
+            </Badge>
+          )}
           {(hasRole(UserRole.ADMIN, UserRole.MANAGER)) && (
             <Button variant="outline" size="sm">
               <Edit className="w-4 h-4 mr-2" />
@@ -148,15 +158,17 @@ export default function LeadDetail() {
                   <CardTitle className="text-base">Original Message</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {lead.content?.subject && (
-                    <p className="font-medium mb-2">{lead.content.subject}</p>
-                  )}
                   <p className="text-muted-foreground whitespace-pre-wrap">
-                    {lead.content?.body}
+                    {lead.message || 'No message content available'}
                   </p>
                   <div className="mt-4 pt-4 border-t text-sm text-muted-foreground">
-                    Received on {formatDateTime(lead.timestamp)}
+                    Received on {formatDateTime(lead.receivedAt || lead.createdAt)}
                   </div>
+                  {lead.processedAt && (
+                    <div className="text-sm text-muted-foreground">
+                      Processed on {formatDateTime(lead.processedAt)}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -177,12 +189,24 @@ export default function LeadDetail() {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Score</p>
-                      <p className="font-medium">{lead.score?.total}/100</p>
+                      <p className="font-medium">{lead.leadScore || 0}/100</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Created</p>
                       <p className="font-medium">{formatDate(lead.createdAt)}</p>
                     </div>
+                    {lead.sourcePlatform && (
+                      <div>
+                        <p className="text-sm text-muted-foreground">Platform</p>
+                        <p className="font-medium capitalize">{lead.sourcePlatform}</p>
+                      </div>
+                    )}
+                    {lead.externalId && (
+                      <div>
+                        <p className="text-sm text-muted-foreground">External ID</p>
+                        <p className="font-medium text-xs">{lead.externalId}</p>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -191,13 +215,13 @@ export default function LeadDetail() {
             <TabsContent value="interactions">
               <Card>
                 <CardContent className="p-6">
-                  {lead.interactions?.length === 0 ? (
+                  {!lead.interactions || lead.interactions.length === 0 ? (
                     <p className="text-muted-foreground text-center py-8">
                       No interactions yet
                     </p>
                   ) : (
                     <div className="space-y-4">
-                      {lead.interactions?.map((interaction: any) => (
+                      {lead.interactions.map((interaction: any) => (
                         <div key={interaction._id} className="flex gap-4 pb-4 border-b last:border-0">
                           <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                             <MessageSquare className="w-4 h-4" />
@@ -220,7 +244,7 @@ export default function LeadDetail() {
             <TabsContent value="tasks">
               <Card>
                 <CardContent className="p-6">
-                  {lead.tasks?.length === 0 ? (
+                  {!lead.tasks || lead.tasks.length === 0 ? (
                     <div className="text-center py-8">
                       <p className="text-muted-foreground">No tasks assigned</p>
                       <Button className="mt-4" size="sm">
@@ -230,13 +254,23 @@ export default function LeadDetail() {
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {lead.tasks?.map((task: any) => (
+                      {lead.tasks.map((task: any) => (
                         <div key={task._id} className="flex items-center justify-between p-3 border rounded-lg">
-                          <div>
+                          <div className="flex-1">
                             <p className="font-medium">{task.title}</p>
-                            <p className="text-sm text-muted-foreground">
-                              Due: {formatDate(task.dueDate)}
-                            </p>
+                            {task.description && (
+                              <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
+                            )}
+                            <div className="flex items-center gap-3 mt-2">
+                              <p className="text-xs text-muted-foreground">
+                                Due: {formatDate(task.dueDate)}
+                              </p>
+                              {task.priority && (
+                                <Badge variant="secondary" className="text-xs">
+                                  {task.priority}
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                           <Badge variant={task.status === 'completed' ? 'default' : 'outline'}>
                             {task.status}
@@ -264,13 +298,13 @@ export default function LeadDetail() {
                     </Button>
                   </div>
                   
-                  {lead.notes?.length === 0 ? (
+                  {!lead.notes || lead.notes.length === 0 ? (
                     <p className="text-muted-foreground text-center py-8">
                       No notes yet
                     </p>
                   ) : (
                     <div className="space-y-4">
-                      {lead.notes?.map((note: any) => (
+                      {lead.notes.map((note: any) => (
                         <div key={note._id} className="p-4 bg-muted rounded-lg">
                           <p className="text-sm">{note.content}</p>
                           <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
@@ -296,16 +330,20 @@ export default function LeadDetail() {
               <CardTitle className="text-base">Contact Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {lead.sender?.email && (
+              {lead.email && (
                 <div className="flex items-center gap-3">
                   <Mail className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm">{lead.sender.email}</span>
+                  <a href={`mailto:${lead.email}`} className="text-sm hover:underline">
+                    {lead.email}
+                  </a>
                 </div>
               )}
-              {lead.sender?.phone && (
+              {lead.phone && (
                 <div className="flex items-center gap-3">
                   <Phone className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm">{lead.sender.phone}</span>
+                  <a href={`tel:${lead.phone}`} className="text-sm hover:underline">
+                    {lead.phone}
+                  </a>
                 </div>
               )}
               {lead.sender?.location && (
@@ -385,14 +423,26 @@ export default function LeadDetail() {
               </CardHeader>
               <CardContent>
                 {lead.assignedTo ? (
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-medium">
-                      {lead.assignedTo.firstName?.[0]}{lead.assignedTo.lastName?.[0]}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-medium">
+                        {lead.assignedTo.firstName?.[0]}{lead.assignedTo.lastName?.[0]}
+                      </div>
+                      <div>
+                        <p className="font-medium">{lead.assignedTo.firstName} {lead.assignedTo.lastName}</p>
+                        <p className="text-sm text-muted-foreground">{lead.assignedTo.email}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium">{lead.assignedTo.firstName} {lead.assignedTo.lastName}</p>
-                      <p className="text-sm text-muted-foreground">{lead.assignedTo.email}</p>
-                    </div>
+                    {lead.assignedAt && (
+                      <p className="text-xs text-muted-foreground">
+                        Assigned on {formatDateTime(lead.assignedAt)}
+                      </p>
+                    )}
+                    {lead.assignedBy && (
+                      <p className="text-xs text-muted-foreground">
+                        By {lead.assignedBy.firstName} {lead.assignedBy.lastName}
+                      </p>
+                    )}
                   </div>
                 ) : (
                   <div className="text-center py-4">
@@ -411,12 +461,13 @@ export default function LeadDetail() {
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
-                {lead.tags?.map((tag: string) => (
-                  <Badge key={tag} variant="secondary">
-                    {tag}
-                  </Badge>
-                ))}
-                {lead.tags?.length === 0 && (
+                {lead.tags && lead.tags.length > 0 ? (
+                  lead.tags.map((tag: string) => (
+                    <Badge key={tag} variant="secondary">
+                      {tag}
+                    </Badge>
+                  ))
+                ) : (
                   <p className="text-sm text-muted-foreground">No tags</p>
                 )}
               </div>
@@ -455,5 +506,3 @@ function LeadDetailSkeleton() {
     </div>
   );
 }
-
-import { Plus } from 'lucide-react';

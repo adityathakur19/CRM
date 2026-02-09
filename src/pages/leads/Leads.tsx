@@ -38,6 +38,10 @@ const statusColors: Record<string, string> = {
   hot: 'bg-red-100 text-red-800 border-red-200',
   warm: 'bg-amber-100 text-amber-800 border-amber-200',
   cold: 'bg-blue-100 text-blue-800 border-blue-200',
+  qualified: 'bg-green-100 text-green-800 border-green-200',
+  new: 'bg-blue-100 text-blue-800 border-blue-200',
+  contacted: 'bg-purple-100 text-purple-800 border-purple-200',
+  unqualified: 'bg-gray-100 text-gray-800 border-gray-200',
 };
 
 const sourceIcons: Record<string, string> = {
@@ -62,9 +66,9 @@ export default function Leads() {
   const { hasRole } = useAuthStore();
   
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
-  const [sourceFilter, setSourceFilter] = useState<string>('');
-  const [stageFilter, setStageFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [sourceFilter, setSourceFilter] = useState<string>('all');
+  const [stageFilter, setStageFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
@@ -79,10 +83,9 @@ export default function Leads() {
       };
       
       if (searchQuery) params.search = searchQuery;
-      const [statusFilter, setStatusFilter] = useState<string>('all');
-const [sourceFilter, setSourceFilter] = useState<string>('all');
-const [stageFilter, setStageFilter] = useState<string>('all');
-
+      if (statusFilter && statusFilter !== 'all') params.status = statusFilter;
+      if (sourceFilter && sourceFilter !== 'all') params.source = sourceFilter;
+      if (stageFilter && stageFilter !== 'all') params.funnelStage = stageFilter;
       
       const response = await leadsApi.getLeads(params);
       return response.data;
@@ -133,64 +136,65 @@ const [stageFilter, setStageFilter] = useState<string>('all');
             </div>
             
             <Select
-  value={statusFilter}
-  onValueChange={(v) => setStatusFilter(v)}
->
-  <SelectTrigger className="w-[140px]">
-    <SelectValue placeholder="Status" />
-  </SelectTrigger>
-  <SelectContent>
-    <SelectItem value="all">All Status</SelectItem>
-    <SelectItem value="hot">Hot</SelectItem>
-    <SelectItem value="warm">Warm</SelectItem>
-    <SelectItem value="cold">Cold</SelectItem>
-  </SelectContent>
-</Select>
+              value={statusFilter}
+              onValueChange={(v) => setStatusFilter(v)}
+            >
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="new">New</SelectItem>
+                <SelectItem value="contacted">Contacted</SelectItem>
+                <SelectItem value="qualified">Qualified</SelectItem>
+                <SelectItem value="unqualified">Unqualified</SelectItem>
+                <SelectItem value="hot">Hot</SelectItem>
+                <SelectItem value="warm">Warm</SelectItem>
+                <SelectItem value="cold">Cold</SelectItem>
+              </SelectContent>
+            </Select>
 
+            <Select
+              value={sourceFilter}
+              onValueChange={(v) => setSourceFilter(v)}
+            >
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="Source" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Sources</SelectItem>
+                {Object.values(LeadSource).map((source) => (
+                  <SelectItem key={source} value={source}>
+                    {source.replace(/_/g, ' ').toUpperCase()}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-<Select
-  value={sourceFilter}
-  onValueChange={(v) => setSourceFilter(v)}
->
-  <SelectTrigger className="w-[160px]">
-    <SelectValue placeholder="Source" />
-  </SelectTrigger>
-  <SelectContent>
-    <SelectItem value="all">All Sources</SelectItem>
-    {Object.values(LeadSource).map((source) => (
-      <SelectItem key={source} value={source}>
-        {source.replace(/_/g, ' ').toUpperCase()}
-      </SelectItem>
-    ))}
-  </SelectContent>
-</Select>
+            <Select
+              value={stageFilter}
+              onValueChange={(v) => setStageFilter(v)}
+            >
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="Stage" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Stages</SelectItem>
+                {Object.values(FunnelStage).map((stage) => (
+                  <SelectItem key={stage} value={stage}>
+                    {stage.replace(/_/g, ' ').toUpperCase()}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-
-<Select
-  value={stageFilter}
-  onValueChange={(v) => setStageFilter(v)}
->
-  <SelectTrigger className="w-[160px]">
-    <SelectValue placeholder="Stage" />
-  </SelectTrigger>
-  <SelectContent>
-    <SelectItem value="all">All Stages</SelectItem>
-    {Object.values(FunnelStage).map((stage) => (
-      <SelectItem key={stage} value={stage}>
-        {stage.replace(/_/g, ' ').toUpperCase()}
-      </SelectItem>
-    ))}
-  </SelectContent>
-</Select>
-
-
-            {(statusFilter || sourceFilter || stageFilter || searchQuery) && (
+            {(statusFilter !== 'all' || sourceFilter !== 'all' || stageFilter !== 'all' || searchQuery) && (
               <Button
                 variant="ghost"
                 onClick={() => {
-                  setStatusFilter('');
-                  setSourceFilter('');
-                  setStageFilter('');
+                  setStatusFilter('all');
+                  setSourceFilter('all');
+                  setStageFilter('all');
                   setSearchQuery('');
                 }}
               >
@@ -210,7 +214,7 @@ const [stageFilter, setStageFilter] = useState<string>('all');
                 <tr className="border-b bg-muted/50">
                   <th className="text-left py-3 px-4 font-medium text-sm">
                     <button
-                      onClick={() => handleSort('sender.displayName')}
+                      onClick={() => handleSort('sender.name')}
                       className="flex items-center gap-1 hover:text-primary"
                     >
                       Lead
@@ -272,14 +276,14 @@ const [stageFilter, setStageFilter] = useState<string>('all');
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium">
-                            {lead.sender?.displayName?.[0] || lead.sender?.username?.[0] || '?'}
+                            {lead.sender?.name?.[0] || lead.sender?.username?.[0] || '?'}
                           </div>
                           <div>
                             <p className="font-medium text-sm">
-                              {lead.sender?.displayName || lead.sender?.username || 'Unknown'}
+                              {lead.sender?.name || lead.sender?.username || 'Unknown'}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              {truncateText(lead.content?.body, 40)}
+                              {truncateText(lead.message, 40)}
                             </p>
                           </div>
                         </div>
@@ -295,13 +299,13 @@ const [stageFilter, setStageFilter] = useState<string>('all');
                         </div>
                       </td>
                       <td className="py-3 px-4">
-                        <Badge variant="outline" className={statusColors[lead.status]}>
+                        <Badge variant="outline" className={statusColors[lead.status] || statusColors.new}>
                           {lead.status}
                         </Badge>
                       </td>
                       <td className="py-3 px-4">
                         <span className="text-sm capitalize">
-                          {lead.funnelStage.replace(/_/g, ' ')}
+                          {lead.funnelStage?.name || 'N/A'}
                         </span>
                       </td>
                       <td className="py-3 px-4">
@@ -310,14 +314,14 @@ const [stageFilter, setStageFilter] = useState<string>('all');
                             <div
                               className={cn(
                                 'h-full rounded-full',
-                                lead.score?.total >= 80 && 'bg-red-500',
-                                lead.score?.total >= 50 && lead.score?.total < 80 && 'bg-amber-500',
-                                lead.score?.total < 50 && 'bg-blue-500'
+                                (lead.leadScore || 0) >= 80 && 'bg-red-500',
+                                (lead.leadScore || 0) >= 50 && (lead.leadScore || 0) < 80 && 'bg-amber-500',
+                                (lead.leadScore || 0) < 50 && 'bg-blue-500'
                               )}
-                              style={{ width: `${lead.score?.total || 0}%` }}
+                              style={{ width: `${lead.leadScore || 0}%` }}
                             />
                           </div>
-                          <span className="text-sm font-medium">{lead.score?.total || 0}</span>
+                          <span className="text-sm font-medium">{lead.leadScore || 0}</span>
                         </div>
                       </td>
                       <td className="py-3 px-4 text-sm text-muted-foreground">
